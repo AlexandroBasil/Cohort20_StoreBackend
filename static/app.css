@@ -1,0 +1,16 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: rgb(210, 235, 255);
+}
+
+h1 {
+    color: coral;
+    text-align: center;
+}
+
+h5 {
+    text-decoration: underline;
+    font-weight: bold;
+    margin-top: 15px;
+}

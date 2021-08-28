@@ -1,13 +1,5 @@
 data = [
     {
-        "_id": "123456789",
-        "title": "Wallet",
-        "price": 55.00,
-        "category": "Accessory",
-        "stock": 10,
-        "image": "products-6jpg"
-    },
-    {
         "_id": "strap",
         "title": "20mm Brown Leather Strap",
         "category": "Strap",

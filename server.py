@@ -1,8 +1,11 @@
-from flask import Flask, render_template, abort, request
-import json
-from data import data
+from flask import Flask, render_template, abort, request;
+import json;
+from data import data;
+from flask_cors import CORS;
+from config import db, parse_json
 
-app = Flask(__name__)  # create a Flask app
+app = Flask(__name__);  # create a Flask app
+CORS(app)
 
 me = {
     "name": "Alexandro",
@@ -34,15 +37,29 @@ def about_email():
 
 @app.route('/api/catalog')
 def get_catalog():
-    return json.dumps(data)
+    cursor = db.products.find({}) # FIRST EXAMPLE
+    prods = []
+    for prod in cursor:
+        prods.append(prod)
+
+    # prods = [prod for prod in cursor] ==> PYTHON WAY
+    return parse_json(prods)
 
 
 @app.route('/api/catalog', methods=['POST'])
 def save_product():
     product = request.get_json()  # Returns a dict
-    data.append(product)
 
-    return json.dumps(product)
+    # validations
+    if not "title" in product:
+        return parse_json({"Error": "title is required", "success": False})
+
+    if not "price" in product or not product["price"]:
+        return parse_json({"Error": "price is required and should not be 0", "success": False})
+
+
+    db.products.insert_one(product)
+    return parse_json(product)
 
     # data = request.get_data() #Returns bytes
     # print(data)
@@ -55,13 +72,14 @@ def get_categories():
         Get the unique categories from the catalog (data var)
         and return them as a list of string
     """
+    cursor = db.products.find({})
     categories = []
-    for item in data:
+    for item in cursor:
         cat = item["category"]
         if cat not in categories:
             categories.append(cat)
 
-    return json.dumps(categories)
+    return parse_json(categories)
 
 
 @app.route('/api/catalog/id/<id>')
@@ -69,19 +87,20 @@ def get_product_by_id(id):
 
     for product in data:
         if(product["_id"] == id):
-            return json.dumps(product)
+            return parse_json(product)
 
     abort(404)
 
 
 @app.route('/api/catalog/category/<category>')
 def get_products_by_category(category):
+    cursor = db.products.find({"category": category})
     results = []
-    for product in data:
+    for product in cursor:
         if(product["category"].lower() == category.lower()):
             results.append(product)
 
-    return json.dumps(results)
+    return parse_json(results)
 
 
 @app.route('/api/catalog/cheapest')
@@ -92,8 +111,55 @@ def get_cheapest():
         if(product["price"] < cheapest["price"]):
             cheapest = product
 
-    return json.dumps(cheapest)
+    return parse_json(cheapest)
+
+# -------------- POPULATE CATALOG DATABASE -------------- #
+@app.route('/api/test/populatedb')
+def populate_db():
+    for prod in data:
+        db.products.insert_one(prod)
+
+    return "Data Loaded"
+
+# --------------- COUPON CODES ------------------------------ # 
+@app.route('/api/couponCodes', methods=['POST'])
+def save_coupon():
+    coupon = request.get_json()
+
+    # VALIDATIONS
+    if not "code" in coupon:
+        return parse_json({"Error": "code is required", "success": False})
+
+    if not "discount" in coupon or not coupon["discount"]:
+        return parse_json({"Error": "discount is required and shouldn't be zero", "success": False})
+
+    db.couponCodes.insert_one(coupon)
+    return parse_json(coupon)
+
+@app.route('/api/couponCodes')
+def get_coupons():
+    cursor = db.couponCodes.find({})
+    codes = [ code for code in cursor]
+    return parse_json(codes)
+
+
+@app.route('/api/couponCodes/<code>')
+def get_coupons(code):
+    code = db.couponCodes.find_one({"code": code})
+    return parse_json(code)
+
+
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+# ---------------------------------------------------------------- #
+# coupon codes
+# db.couponCodes
+# code, discount
+
+# create a GET to read all
+# create a POST to add
+# create a GET to search by code

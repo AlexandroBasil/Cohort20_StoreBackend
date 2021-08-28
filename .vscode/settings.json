@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
         "alexandro"
+    ],
+    "cSpell.ignoreWords": [
+        "populatedb"
     ]
 }

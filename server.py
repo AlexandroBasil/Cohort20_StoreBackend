@@ -1,10 +1,10 @@
-from flask import Flask, render_template, abort, request;
-import json;
-from data import data;
-from flask_cors import CORS;
+from flask import Flask, render_template, abort, request
+import json
+from data import data
+from flask_cors import CORS
 from config import db, parse_json
 
-app = Flask(__name__);  # create a Flask app
+app = Flask(__name__)  # create a Flask app
 CORS(app)
 
 me = {
@@ -34,10 +34,12 @@ def about_page():
 def about_email():
     return me["email"]
 
+# ----------------- CATALOG ------------------------------ #
+
 
 @app.route('/api/catalog')
 def get_catalog():
-    cursor = db.products.find({}) # FIRST EXAMPLE
+    cursor = db.products.find({})  # FIRST EXAMPLE
     prods = []
     for prod in cursor:
         prods.append(prod)
@@ -56,7 +58,6 @@ def save_product():
 
     if not "price" in product or not product["price"]:
         return parse_json({"Error": "price is required and should not be 0", "success": False})
-
 
     db.products.insert_one(product)
     return parse_json(product)
@@ -84,12 +85,11 @@ def get_categories():
 
 @app.route('/api/catalog/id/<id>')
 def get_product_by_id(id):
+    product = db.products.find_one({"id": id})
+    if not product:
+        abort(404)
 
-    for product in data:
-        if(product["_id"] == id):
-            return parse_json(product)
-
-    abort(404)
+    return parse_json(product)
 
 
 @app.route('/api/catalog/category/<category>')
@@ -113,7 +113,9 @@ def get_cheapest():
 
     return parse_json(cheapest)
 
-# -------------- POPULATE CATALOG DATABASE -------------- #
+# ----------------- POPULATE CATALOG DATABASE ------------------------------ #
+
+
 @app.route('/api/test/populatedb')
 def populate_db():
     for prod in data:
@@ -121,7 +123,9 @@ def populate_db():
 
     return "Data Loaded"
 
-# --------------- COUPON CODES ------------------------------ # 
+# ----------------- COUPON CODES ------------------------------ #
+
+
 @app.route('/api/couponCodes', methods=['POST'])
 def save_coupon():
     coupon = request.get_json()
@@ -136,25 +140,52 @@ def save_coupon():
     db.couponCodes.insert_one(coupon)
     return parse_json(coupon)
 
+
 @app.route('/api/couponCodes')
 def get_coupons():
     cursor = db.couponCodes.find({})
-    codes = [ code for code in cursor]
+    codes = [code for code in cursor]
     return parse_json(codes)
 
 
 @app.route('/api/couponCodes/<code>')
-def get_coupons(code):
+def get_coupon(code):
     code = db.couponCodes.find_one({"code": code})
     return parse_json(code)
 
 
+# ----------------- ORDERS ------------------------------ #
+@app.route('/api/orders', methods=['POST'])
+def save_order():
+    order = request.get_json()
+
+    # VALIDATIONS
+    prods = order["products"]
+    count = len(prods)
+    if (count < 1):
+        abort(400, "Error: Missing products, not allowed!")
+
+    db.orders.insert_one(order)
+    return parse_json(order)
 
 
+@app.route('/api/orders')
+def get_orders():
+    cursor = db.orders.find({})
+    orders = [order for order in cursor]
+    return parse_json(orders)
+
+
+@app.route('/api/orders/<userId>')
+def get_order_for_user(userId):
+    cursor = db.orders.find({"userId": userId})
+    orders = [order for order in cursor]
+    return parse_json(orders)
+
+
+# ----------------- APP START ------------------------------ #
 if __name__ == '__main__':
     app.run(debug=True)
-
-
 # ---------------------------------------------------------------- #
 # coupon codes
 # db.couponCodes

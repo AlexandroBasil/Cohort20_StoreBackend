@@ -1,6 +1,9 @@
 {
     "cSpell.words": [
-        "alexandro"
+        "alexandro",
+        "bson",
+        "mongodb",
+        "pymongo"
     ],
     "cSpell.ignoreWords": [
         "populatedb"

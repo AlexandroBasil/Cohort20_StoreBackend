@@ -165,6 +165,28 @@ def save_order():
     if (count < 1):
         abort(400, "Error: Missing products, not allowed!")
 
+    total = 0
+    for item in prods:
+        id = item["_id"]
+        print(id)
+
+        db_item = db.products.find_one({"_id": id})
+        item["price"] = db_item["price"]
+        total += db_item["price"]
+
+    print("The total is: ", total)
+    order["total"] = total
+
+    if "coupon" in order and order["coupon"]:
+        code = order["coupon"]
+        coupon = db.couponCodes.find_one({"code": code})
+        if coupon:
+            discount = coupon["discount"]
+            total = total - (total * discount) / 100
+            order["total"] = total
+        else:
+            order["coupon"] = "INVALID"
+
     db.orders.insert_one(order)
     return parse_json(order)
 

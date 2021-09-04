@@ -172,7 +172,7 @@ def save_order():
 
         db_item = db.products.find_one({"_id": id})
         item["price"] = db_item["price"]
-        total += db_item["price"]
+        total += db_item["price"] * item["quantity"]
 
     print("The total is: ", total)
     order["total"] = total

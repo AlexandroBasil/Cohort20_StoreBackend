@@ -3,6 +3,7 @@
         "alexandro",
         "bson",
         "mongodb",
+        "onlinestore",
         "pymongo"
     ],
     "cSpell.ignoreWords": [
